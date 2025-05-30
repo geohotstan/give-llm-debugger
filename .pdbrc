@@ -1,0 +1,37 @@
+# ~/.pdbrc or project/.pdbrc
+import sys
+# Add the path to where dump_pdb_context.py is located if it's not in a standard Python path
+# For example, if it's in the same directory as your project:
+# import os; sys.path.append(os.getcwd())
+
+import dump_pdb_context
+
+# Define an alias or a new command for pdb
+# Pdb commands are methods of the Pdb class, typically starting with 'do_'
+# We can assign our function to an alias
+alias dump !import dump_pdb_context; dump_pdb_context.pdb_dump(%*%)
+# %*% passes all arguments from the pdb command line to the function
+# So you can type: (Pdb) dump globals depth=3
+
+# Or, to make it a proper command (more involved if you want to parse args cleanly):
+# import pdb
+# def do_dumpctx(self, arg):
+#     """dumpctx [globals] [depth=N] [json|dict] - Dumps current PDB context.
+#     globals: include global variables.
+#     depth=N: max serialization depth (default 2).
+#     json: output as JSON (default).
+#     dict: output as Python dict."""
+#     args = arg.split()
+#     include_globals = 'globals' in args
+#     depth_val = 2
+#     output_json = True # Default to JSON
+#     for a in args:
+#         if a.startswith('depth='):
+#             try: depth_val = int(a.split('=')[1])
+#             except ValueError: print("Invalid depth value.")
+#         elif a == 'dict':
+#             output_json = False
+#         elif a == 'json':
+#             output_json = True
+#     dump_pdb_context.pdb_dump(include_globals=include_globals, depth=depth_val, to_json=output_json)
+# pdb.Pdb.do_dumpctx = do_dumpctx
