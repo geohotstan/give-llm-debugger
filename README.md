@@ -16,10 +16,10 @@ This project builds upon the initial idea of leveraging `pdb` to provide rich st
 ## Prerequisites
 
 *   **Python**: Version 3.8 or higher is recommended.
-*   **Dependencies**: The project uses `setuptools` for packaging and its dependencies are listed in `pyproject.toml`. Key libraries include:
-    *   `openrouter-python`: For interacting with various LLMs via OpenRouter.
-    *   `requests` and `python-dotenv` (though `python-dotenv` is not explicitly used by `debugger_chain.py` for API key loading, `OPENROUTER_API_KEY` is read directly from the environment).
-    *   To install dependencies, you would typically use a build system that reads `pyproject.toml` (e.g., `pip install .` if the project is set up as an installable package, or ensure your environment has these packages). For this project, ensure `openrouter-python` is installed (`pip install openrouter-python`).
+*   **Dependencies**: The project's dependencies are listed in `pyproject.toml`. Key libraries required for `debugger_chain.py` include:
+    *   `requests`: Used for making direct HTTP calls to the OpenRouter API.
+    *   `python-dotenv`: (Currently listed in `pyproject.toml`. `debugger_chain.py` reads the API key directly from the environment via `os.environ.get`, so `python-dotenv` is not strictly required by the script itself unless used by other parts of a larger project structure to load `.env` files).
+    *   All primary dependencies are listed in `pyproject.toml`. You can typically install necessary packages using a Python package manager that reads this file (e.g., `pip install .` from the project root if the project is structured as an installable package). For running `debugger_chain.py` directly, ensure at least `requests` is installed (`pip install requests`).
 
 ## Configuration
 

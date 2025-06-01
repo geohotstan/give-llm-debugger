@@ -4,8 +4,10 @@ import logging
 import time
 import json
 import select
-import os # Already present, but good to ensure for OPENROUTER_API_KEY
-from openrouter import OpenRouter # For LLM interaction
+import os
+import requests # For making HTTP requests to OpenRouter API
+# import json # json is used by PDBInterface.get_context, ensure it's available globally or imported there.
+             # get_llm_command will also use json for payload, requests handles it.
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -36,39 +38,99 @@ def get_llm_command(prompt: str, model_name: str = None) -> str:
         logging.error("OpenRouter API key is not set. Cannot get LLM command.")
         return "error: OPENROUTER_API_KEY not set"
 
+    OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+    # Get HTTP Referer and X-Title from environment variables or use defaults
+    http_referer = os.environ.get("OPENROUTER_HTTP_REFERER", "https://github.com/your-repo/llm-debugger-chain") # Example default
+    app_title = os.environ.get("OPENROUTER_X_TITLE", "LLM Debugger Chain")
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": http_referer,
+        "X-Title": app_title
+    }
+
+    payload = {
+        "model": model_name,
+        "messages": [{"role": "user", "content": prompt}]
+        # Optionally, add other parameters like "temperature", "max_tokens"
+        # "stream": False, # Explicitly not streaming for now
+    }
+
+    logging.info(f"Sending prompt to OpenRouter model {model_name} via requests...")
+    # logging.debug(f"Payload for LLM: {json.dumps(payload)}") # Requires import json here
+
     try:
-        client = OpenRouter(api_key=OPENROUTER_API_KEY)
-        logging.info(f"Sending prompt to OpenRouter model {model_name}...")
-        # Consider logging the prompt only at DEBUG level or if explicitly enabled,
-        # as it can be verbose and might contain sensitive info depending on context.
-        # logging.debug(f"Prompt for LLM: {prompt}")
+        response = requests.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=30) # 30-second timeout
+        response.raise_for_status()  # Raises an HTTPError for bad responses (4XX or 5XX)
 
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[{"role": "user", "content": prompt}]
-            # Add other parameters like temperature, max_tokens if needed
-        )
+        response_json = response.json()
 
-        if response.choices and response.choices[0].message and response.choices[0].message.content:
-            llm_response_content = response.choices[0].message.content
-            command = llm_response_content.strip()
-            logging.info(f"LLM suggested command: '{command}'")
-            # Placeholder for more sophisticated command extraction if needed:
-            # e.g., if LLM wraps command in ```pdb ... ```
-            return command
-        else:
-            logging.error("LLM response was empty or malformed.")
-            # Log the actual response structure if it's unexpected
-            # logging.debug(f"Malformed LLM response: {response}")
-            return "error: LLM response empty or malformed"
+        # Validate response structure before accessing nested keys
+        if not isinstance(response_json, dict):
+            logging.error(f"Error: API response is not a JSON object. Response: {response.text[:200]}")
+            return "error: API response not a JSON object"
 
-    except Exception as e:
-        # Log the type of exception and message
-        logging.error(f"Error calling OpenRouter API (model: {model_name}): {type(e).__name__} - {e}")
-        # For debugging, one might want to log traceback:
+        choices = response_json.get("choices")
+        if not choices or not isinstance(choices, list) or len(choices) == 0:
+            logging.error(f"Error: 'choices' array missing or empty in API response. Response: {response_json}")
+            return "error: API response missing 'choices'"
+
+        first_choice = choices[0]
+        if not isinstance(first_choice, dict):
+            logging.error(f"Error: First choice is not a JSON object. Choice: {first_choice}")
+            return "error: API response first choice not an object"
+
+        message = first_choice.get("message")
+        if not message or not isinstance(message, dict):
+            logging.error(f"Error: 'message' object missing or malformed in first choice. Choice: {first_choice}")
+            return "error: API response missing 'message' in choice"
+
+        llm_response_content = message.get("content")
+        if llm_response_content is None: # Allow empty string, but not None
+            logging.error(f"Error: 'content' missing in message object. Message: {message}")
+            return "error: API response missing 'content' in message"
+
+        command = str(llm_response_content).strip() # Ensure it's a string and strip whitespace
+
+        if not command: # Check if command is empty after stripping
+            # This case might be valid if LLM intentionally returns nothing (e.g. ack),
+            # but for PDB commands, we usually expect something.
+            # Depending on LLM's behavior, prompt might need to enforce non-empty.
+            logging.warning("LLM returned an empty command string.")
+            # Return "error: LLM returned empty command" if this is definitively an error state.
+            # For now, let's allow it, as some PDB commands are very short (e.g. 'n').
+            # If this becomes problematic, add the error return.
+            # However, the prompt asks for "ONLY the PDB command", so empty is suspicious.
+            # Let's treat truly empty as an issue to be safe for now.
+            return "error: LLM returned empty command string"
+
+        logging.info(f"LLM suggested command: '{command}'")
+        return command
+
+    except requests.exceptions.HTTPError as http_err:
+        error_message = f"HTTP error occurred: {http_err}."
+        try:
+            # Try to get more details from response if available
+            error_detail_json = http_err.response.json()
+            error_message += f" Details: {error_detail_json.get('error', {}).get('message', http_err.response.text)}"
+        except ValueError: # response.json() fails if not JSON
+            error_message += f" Raw Response: {http_err.response.text[:200] if http_err.response else 'N/A'}"
+
+        logging.error(error_message)
+        return f"error: API call failed (HTTP {http_err.response.status_code if http_err.response else 'Error'})"
+    except requests.exceptions.Timeout:
+        logging.error("Request to OpenRouter API timed out.")
+        return "error: API call failed (Timeout)"
+    except requests.exceptions.RequestException as req_err:
+        logging.error(f"Request exception occurred: {req_err}")
+        return f"error: API call failed (Request Error: {type(req_err).__name__})"
+    except Exception as e: # Catch-all for other unexpected errors during the process
+        logging.error(f"An unexpected error occurred in get_llm_command: {type(e).__name__} - {e}")
         # import traceback
-        # logging.error(traceback.format_exc())
-        return f"error: API call failed ({type(e).__name__})"
+        # logging.debug(traceback.format_exc())
+        return "error: API call failed (Unexpected Error)"
 
 
 def run_debugger_chain(
