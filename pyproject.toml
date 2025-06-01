@@ -4,4 +4,8 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "requests>=2.20.0",
+    "python-dotenv>=0.20.0",
+    "openrouter-api>=0.7.0"
+]
