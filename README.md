@@ -31,7 +31,7 @@ Some existing pitfalls:
 ---
 Some open questions
 What about LLMs?
-Is it possible to give perfect code understanding to a LLM at inference time?
+Is it possible to give perfect code understanding to a LLM at inference time? (it's probably easier for LLM to have complete code understanding than humans I think)
 Push a full debugger trace into the context window? How would it work?
 Certainly LLMs have a different memory nuances compared to humans, so what would be some coding habits a LLM should use?
 Or maybe LLMs can massively assist in improving Human code understanding somehow.
