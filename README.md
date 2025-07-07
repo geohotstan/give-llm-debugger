@@ -5,11 +5,11 @@ Each line of code is understood with:
 2. Transformation of input values (what is done at that LOC, and maybe implementation details of that transformation)
 3. Output values given input values (value assignment back to locals and globals in that LOC)
 
-Perfect code understanding should have perfect knowledge of all LOCs in the codebase, with each LOC understanding satisfying the criteria above.
+Perfect code understanding should have perfect knowledge of all LOCs in the codebase, with each LOC understanding satisfying the criteria above.  
 It should also be noted that knowledge of codepaths or higher codebase level knowledge is also important, and that `3.` depends on `1.` and `2.`
 
 ---
-Humans have memory capacity issues. Recently saved/retrieved memory is the most reliable, memory not recently visited becomes prone to hallucination (forgetting) unless the human makes an explicit effort do retrieval, to refresh that memory again. (And obviously the more you refresh certain memories, the less that memory is prone to hallucination)
+Humans have memory capacity issues. Recently saved/retrieved memory is the most reliable, memory not recently visited becomes prone to hallucination (forgetting) unless the human makes an explicit effort do retrieval, to refresh that memory again. (And obviously the more you refresh certain memories, the less that memory is prone to hallucination)  
 Given this criteria, there has been various coding habits that aim to facilitate better code understanding, with most of it directed at the nuances of human memory capacity.
 
 Some of these are:
@@ -21,7 +21,7 @@ Some of these are:
 - Unittests and typechecking to offload code understanding to machine
 - Well scoped code is always good, because it prunes the space of potential `1.`.
 
-Still codebases are pretty big and it's still very cumbersome for a human to sift through every LOC, though still effective in improving understanding.
+Still codebases are pretty big and it's still very cumbersome for a human to sift through every LOC, though still effective in improving understanding.  
 It's difficult for most humans to achieve full code understanding. For those who do manage to achieve it, they're likely maintainers of the codebase as they have indexed the entire codebase into their memory.
 
 Some existing pitfalls:
@@ -30,8 +30,8 @@ Some existing pitfalls:
 
 ---
 Some open questions
-What about LLMs?
-Is it possible to give perfect code understanding to a LLM at inference time? (it's probably easier for LLM to have complete code understanding than humans I think)
-Push a full debugger trace into the context window? How would it work?
-Certainly LLMs have a different memory nuances compared to humans, so what would be some coding habits a LLM should use?
+What about LLMs?  
+Is it possible to give perfect code understanding to a LLM at inference time? (it's probably easier for LLM to have complete code understanding than humans I think)  
+Push a full debugger trace into the context window? How would it work?  
+Certainly LLMs have a different memory nuances compared to humans, so what would be some coding habits a LLM should use?  
 Or maybe LLMs can massively assist in improving Human code understanding somehow.
