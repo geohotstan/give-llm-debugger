@@ -6,7 +6,7 @@ Each line of code is understood with:
 3. Output values given input values (value assignment back to locals and globals in that LOC)
 
 Perfect code understanding should have perfect knowledge of all LOCs in the codebase, with each LOC understanding satisfying the criteria above.
-It should also be noted that knowledge of codepaths or higher codebase level knowledge is also important, and `3.` depends on `1.` and `2.`
+It should also be noted that knowledge of codepaths or higher codebase level knowledge is also important, and that `3.` depends on `1.` and `2.`
 
 ---
 Humans have memory capacity issues. Recently saved/retrieved memory is the most reliable, memory not recently visited becomes prone to hallucination (forgetting) unless the human makes an explicit effort do retrieval, to refresh that memory again. (And obviously the more you refresh certain memories, the less that memory is prone to hallucination)
@@ -21,11 +21,11 @@ Some of these are:
 - Unittests and typechecking to offload code understanding to machine
 - Well scoped code is always good, because it prunes the space of potential `1.`.
 
-Still codebases are pretty big and it's still very cumbersome for a human to sift through every LOC, though effective in improving understanding.
-It's still difficult for most humans to achieve full code understanding. For those who do manage to achieve it, they're likely maintainers of the codebase as they have indexed the entire codebase into their memory.
+Still codebases are pretty big and it's still very cumbersome for a human to sift through every LOC, though still effective in improving understanding.
+It's difficult for most humans to achieve full code understanding. For those who do manage to achieve it, they're likely maintainers of the codebase as they have indexed the entire codebase into their memory.
 
 Some existing pitfalls:
-- For `1.` specifically, it's easier to reason about in the start of the codepath rather than later. The more transformations values in the locals and globals have gone through, the more prone to error it becomes.
+- For `1.` specifically, it's easier to reason about in the start of the codepath rather than later. The more transformations values in the locals and globals have gone through, the more blurry the expected values become.
 - Complicated non-linear code is harder to understand than linear ones. For example for code that does recursion many many times, it's very tedious to trace it LOC by LOC, so the expected values at the output of the recursion becomes blurry.
 
 ---
